@@ -1,17 +1,17 @@
 -- This file was automatically generated for the LuaDist project.
 
 package = "hotswap-hash"
-version = "1.1-1"
+version = "1.2-1"
 
 -- LuaDist source
 source = {
-  tag = "1.1-1",
+  tag = "1.2-1",
   url = "git://github.com/LuaDist-testing/hotswap-hash.git"
 }
 -- Original source
 -- source = {
 --   url = "git://github.com/saucisson/lua-hotswap",
---   tag = "1.1",
+--   tag = "1.2",
 -- }
 
 description = {

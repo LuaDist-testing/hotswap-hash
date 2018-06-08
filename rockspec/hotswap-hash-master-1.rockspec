@@ -1,4 +1,4 @@
-package = "hotswap.http"
+package = "hotswap-hash"
 version = "master-1"
 
 source = {
@@ -6,7 +6,7 @@ source = {
 }
 
 description = {
-  summary    = "Hotswap backend using http",
+  summary    = "Hotswap backend using file hashes",
   detailed   = [[]],
   license    = "MIT/X11",
   homepage   = "https://github.com/saucisson/lua-hotswap",
@@ -14,17 +14,14 @@ description = {
 }
 
 dependencies = {
-  "lua           >= 5.1",
-  "hotswap       >= 1",
-  "luafilesystem >= 1",
-  "luasec        >= 0",
-  "luasocket     >= 2",
-  "serpent       >= 0",
+  "lua     >= 5.1",
+  "hotswap >= 1",
+  "xxhash  >= v1",
 }
 
 build = {
   type    = "builtin",
   modules = {
-    ["hotswap.http"] = "src/hotswap/http.lua",
+    ["hotswap.hash"] = "src/hotswap/hash.lua",
   },
 }

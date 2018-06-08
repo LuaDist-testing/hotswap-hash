@@ -1,4 +1,4 @@
-package = "hotswap.ev"
+package = "hotswap-ev"
 version = "master-1"
 
 source = {
@@ -18,6 +18,7 @@ dependencies = {
   "hotswap  >= 1",
   "lua-ev   >= v1",
   "luaposix >= 33",
+  "xxhash   >= v1",
 }
 
 build = {

@@ -16,13 +16,15 @@ local hotswap = require "hotswap.http" {
     }
   end,
   decode = function (t)
-    return json.decode (t.body)
+    if t.code == 200 then
+      return json.decode (t.body)
+    end
   end,
 }
 
 assert (os.execute [[
   rm -rf ./nginx/*.log ./nginx/*.pid
-  /usr/sbin/nginx -p ./nginx/ -c nginx.conf 2> /dev/null
+  /usr/sbin/nginx -p ./nginx/ -c nginx.conf
 ]])
 
 local start = gettime ()

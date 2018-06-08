@@ -1,10 +1,10 @@
 local http    = require "socket.http"
-local https   = require "ssl.https"
+local https   = pcall (require, "ssl.https") and require "ssl.https" or nil
 local lfs     = require "lfs"
 local ltn12   = require "ltn12"
-local serpent = require "serpent"
 local Hotswap = getmetatable (require "hotswap")
 local Http    = {}
+
 
 --[[
 
@@ -41,19 +41,21 @@ local function request (t)
   else
     assert (false)
   end
-  return {
+  local ret = {
     body    = table.concat (result),
     code    = code,
     headers = headers,
     status  = status,
     request = t,
   }
+  return ret
 end
 
 function Http.new (t)
   local instance = Hotswap.new {
     new     = Http.new,
-    preload = Http.preload,
+    init    = Http.init,
+    data    = {},
     load    = Http.load,
     save    = Http.save,
     encode  = t and t.encode or assert (false),
@@ -63,10 +65,14 @@ function Http.new (t)
   os.remove (instance.storage)
   lfs.mkdir (instance.storage)
   instance.downloaded = instance.storage .. "/_list"
-  local ok, data = serpent.load (instance.downloaded, {
-    safe = true,
-  })
-  instance.data = ok and data or {}
+  pcall (function ()
+    for line in io.lines (instance.downloaded) do
+      local module, etag = line:match "^([^:]+):(%S+)"
+      instance.data [module] = {
+        etag = etag,
+      }
+    end
+  end)
   local function from_storage (name)
     return loadfile (instance.storage .. "/" .. name)
   end
@@ -81,13 +87,13 @@ function Http.new (t)
     instance:save ()
     return from_storage (name)
   end
-  table.insert (package.searchers, 2, from_storage)
-  table.insert (package.searchers, 3, from_http   )
-  instance:preload ()
+  table.insert (instance.searchers, 2, from_storage)
+  table.insert (instance.searchers, 3, from_http   )
+  instance:init ()
   return instance
 end
 
-function Http:preload ()
+function Http:init ()
   if not next (self.data) then
     return
   end
@@ -104,11 +110,12 @@ function Http:preload ()
       result [key] = subresult [key]
     end
   end
-  assert (type (result) == "table")
-  for key, t in pairs (result) do
-    self:load (key, t)
+  if type (result) == "table" then
+    for key, t in pairs (result) do
+      self:load (key, t)
+    end
+    self:save ()
   end
-  self:save ()
 end
 
 function Http:load (key, t)
@@ -127,25 +134,17 @@ function Http:load (key, t)
     file:write (t.lua)
     file:close ()
   end
-  self.data [key] = self.data [key] or {}
-  for k, v in pairs (t) do
-    if k ~= "lua" then
-      self.data [key] [k] = v
-    end
-  end
+  self.data [key] = {
+    etag = t.etag,
+  }
 end
 
 function Http:save ()
   local file = io.open (self.downloaded, "w")
   if file then
-    file:write (serpent.dump (self.data, {
-      indent   = "  ",
-      comment  = false,
-      sortkeys = true,
-      compact  = false,
-      fatal    = true,
-      nocode   = true,
-    }))
+    for module, t in pairs (self.data) do
+      file:write (module .. ":" .. t.etag .. "\n")
+    end
     file:close ()
   end
 end
